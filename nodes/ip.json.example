@@ -1,0 +1,37 @@
+{
+  "authorization": {
+    "sudo": {
+      "users": ["deploy"]
+    }
+  },
+
+  "postgresql": {
+    "password": {
+      "postgres": "qwe12345"
+    }
+  },
+
+  "rbenv":{
+    "rubies": [
+      "2.3.0"
+    ],
+    "global" : "2.3.0",
+    "gems": {
+      "2.3.0" : [
+        {"name":"bundler"}
+      ]
+    }
+  },
+
+  "run_list": [
+    "recipe[chef-solo-search::default]",
+    "recipe[users::sysadmins]",
+    "recipe[nginx-server::default]",
+    "recipe[postgresql::server]",
+    "recipe[rbenv::default]"
+  ],
+
+  "automatic": {
+    "ipaddress": "148.251.27.154"
+  }
+}

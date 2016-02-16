@@ -1,0 +1,9 @@
+{
+  "id": "deploy",
+  "password": "SECRET",
+  "ssh_keys": [
+    "KEY"
+  ],
+  "groups": [ "sysadmin"],
+  "shell": "\/bin\/bash"
+}
