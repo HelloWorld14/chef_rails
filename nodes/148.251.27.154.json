@@ -1,0 +1,8 @@
+{
+  "run_list": [
+    "recipe[nginx-server::default]"
+  ],
+  "automatic": {
+    "ipaddress": "148.251.27.154"
+  }
+}
