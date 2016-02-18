@@ -1,0 +1,59 @@
+### /etc/monit/conf.d/svcnet
+
+check process nginx with pidfile /run/nginx.pid
+  start program = "/etc/init.d/nginx start"
+  stop program = "/etc/init.d/nginx stop"
+  if cpu > 60% for 2 cycles then alert
+  if cpu > 80% for 5 cycles then restart
+  if memory usage > 80% for 5 cycles then restart
+  if failed host 127.0.0.1 port 80 protocol http
+    then restart
+  if 3 restarts within 5 cycles then timeout
+
+### Postgresql ###
+check process postgresql
+  with pidfile "/var/run/postgresql/9.3-main.pid"
+  start program = "/usr/sbin/service postgresql start"
+  stop  program = "/usr/sbin/service postgresql stop"
+  if failed host localhost port 5432 protocol pgsql then restart
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 5 restarts within 5 cycles then timeout
+
+### Unicorn ###
+check process unicorn
+  with pidfile "/home/deploy/svcnet/current/tmp/pids/unicorn.pid"
+  start program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && ( RAILS_ENV=production ~/.rvm/bin/rvm default do bundle exec unicorn -c /home/deploy/svcnet/current/config/unicorn/production.rb -E deployment -D  )'"
+  stop  program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && /usr/bin/env kill -s QUIT `cat /home/deploy/svcnet/current/tmp/pids/unicorn.pid`'"
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 3 restarts within 5 cycles then timeout
+
+### Thin (private_pub) ###
+check process thin
+  with pidfile "/home/deploy/svcnet/shared/tmp/pids/thin.pid"
+  start program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && RAILS_ENV=production /home/deploy/.rvm/bin/rvm default do bundle exec thin -C config/private_pub_thin.yml start'"
+  stop program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && RAILS_ENV=production /home/deploy/.rvm/bin/rvm default do bundle exec thin -C config/private_pub_thin.yml stop'"
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 3 restarts within 3 cycles then timeout
+
+### Redis ###
+check process redis-server
+    with pidfile "/var/run/redis/redis-server.pid"
+    start program = "/etc/init.d/redis-server start"
+    stop program = "/etc/init.d/redis-server stop"
+    if 2 restarts within 3 cycles then timeout
+    if totalmem > 100 Mb then alert
+    if children > 255 for 5 cycles then stop
+    if cpu usage > 95% for 3 cycles then restart
+    if memory usage > 80% for 5 cycles then restart
+    if failed host 127.0.0.1 port 6379 then restart
+    if 5 restarts within 5 cycles then timeout
+
+### Sidekiq ###
+check process sidekiq
+  with pidfile "/home/deploy/svcnet/shared/tmp/pids/sidekiq.pid"
+  start program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && /home/deploy/.rvm/bin/rvm default do bundle exec sidekiq --index 0 --pidfile /home/deploy/svcnet/shared/tmp/pids/sidekiq.pid --environment production --logfile /home/deploy/svcnet/shared/log/sidekiq.log --daemon'"
+  stop program = "/bin/su - deploy -c 'cd /home/deploy/svcnet/current && /home/deploy/.rvm/bin/rvm default do bundle exec sidekiqctl stop /home/deploy/svcnet/shared/tmp/pids/sidekiq.pid 10'"
+

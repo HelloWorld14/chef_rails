@@ -4,6 +4,7 @@ DEPENDENCIES
     git: git://github.com/opscode-cookbooks/postgresql.git
     revision: 7df755bdc1da7af4ac77e2076ed4703491cf8196
   rvm
+  sudo
   users
     git: git://github.com/chef-cookbooks/users.git
     revision: 588b9b64910d00d629de4a3c54308b6c91b252aa
@@ -25,4 +26,5 @@ GRAPH
   rvm (0.9.4)
     chef_gem (>= 0.0.0)
     java (>= 0.0.0)
+  sudo (2.9.0)
   users (2.0.2)
