@@ -1,33 +1,39 @@
 {
   "authorization": {
     "sudo": {
-      "users": ["deploy"]
+      "users": ["<USERNAME>"],
+      "passwordless": true
     }
   },
 
   "postgresql": {
     "password": {
-      "postgres": "SECRET"
+      "postgres": "<SECRET>"
     }
-  },
-
-  "nginx": {
-    "version": "1.8.1"
   },
 
   "rvm": {
     "user_installs": [
       {
-        "user": "deploy",
-        "default_ruby": "2.2.2",
-        "rubies": ["2.2.2"]
+        "user": "<USERNAME>",
+        "default_ruby": "<RUBY_VERSION>",
+        "rubies": ["<RUBY_VERSION>"]
       }
     ]
   },
 
+  "application": {
+    "database_user": "<USERNAME>",
+    "database_user_password": "<SECRET>",
+    "database_name": "<NAMEDATABSE>"
+  },
+
   "run_list": [
+    "recipe[openssl::default]",
+    "recipe[build-essential::default]",
     "recipe[chef-solo-search::default]",
     "recipe[users::sysadmins]",
+    "recipe[sudo::default]"
     "recipe[postgresql::server]",
     "recipe[rvm::default]",
     "recipe[rvm::user]",

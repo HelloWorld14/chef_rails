@@ -39,9 +39,10 @@ package 'monit'
 
 execute 'alter role for application' do
   command <<-COMMAND
-sudo -u postgres psql -c "CREATE ROLE svcnet WITH superuser"
-sudo -u postgres psql -c "ALTER ROLE svcnet WITH password 'qwe12345'"
-sudo -u postgres psql -c "ALTER ROLE svcnet WITH login"
+sudo -u postgres psql -c "CREATE ROLE #{node['application']['database_user']} WITH superuser"
+sudo -u postgres psql -c "ALTER ROLE #{node['application']['database_user']} WITH password '#{node['application']['database_user_password']}'"
+sudo -u postgres psql -c "ALTER ROLE #{node['application']['database_user']}t WITH login"
+sudo -u postgres psql -c "CREATE DATABASE #{node['application']['database_name']}"
   COMMAND
 end
 
