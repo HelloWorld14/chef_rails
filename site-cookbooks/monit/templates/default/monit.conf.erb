@@ -1,0 +1,76 @@
+### Nginx ###
+check process nginx with pidfile /run/nginx.pid
+  start program = "/etc/init.d/nginx start"
+  stop program = "/etc/init.d/nginx stop"
+  if cpu > 60% for 2 cycles then alert
+  if cpu > 80% for 5 cycles then restart
+  if memory usage > 80% for 5 cycles then restart
+  if failed host 127.0.0.1 port 80 protocol http
+    then restart
+  if 3 restarts within 5 cycles then timeout
+
+### Postgresql ###
+check process postgresql
+  with pidfile "/var/run/postgresql/9.3-main.pid"
+  start program = "/usr/sbin/service postgresql start"
+  stop  program = "/usr/sbin/service postgresql stop"
+  if failed host localhost port 5432 protocol pgsql then restart
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 5 restarts within 5 cycles then timeout
+
+### Redis ###
+check process redis-server
+  with pidfile "/var/run/redis/redis-server.pid"
+  start program = "/etc/init.d/redis-server start"
+  stop program = "/etc/init.d/redis-server stop"
+  if 2 restarts within 3 cycles then timeout
+  if totalmem > 100 Mb then alert
+  if children > 255 for 5 cycles then stop
+  if cpu usage > 95% for 3 cycles then restart
+  if memory usage > 80% for 5 cycles then restart
+  if failed host 127.0.0.1 port 6379 then restart
+  if 5 restarts within 5 cycles then timeout
+
+<% user_name = node[:authorization][:sudo][:users][0] %>
+<% app_name = node[:application][:name] %>
+<% if user_name && app_name %>
+### Unicorn ###
+check process unicorn
+  with pidfile "/home/<%= user_name %>/<%= app_name %>/current/tmp/pids/unicorn.pid"
+  start program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && ( RAILS_ENV=production ~/.rvm/bin/rvm default do bundle exec unicorn -c /home/<%= user_name %>/<%= app_name %>/current/config/unicorn/production.rb -E deployment -D  )'"
+  stop  program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && /usr/bin/env kill -s QUIT `cat /home/<%= user_name %>/<%= app_name %>/current/tmp/pids/unicorn.pid`'"
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 3 restarts within 5 cycles then timeout
+<% end %>
+
+<% if user_name && app_name && node[:monit][:private_pub] == true %>
+### Thin (private_pub) ###
+check process thin
+  with pidfile "/home/<%= user_name %>/<%= app_name %>/shared/tmp/pids/thin.pid"
+  start program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && RAILS_ENV=production /home/<%= user_name %>/.rvm/bin/rvm default do bundle exec thin -C config/private_pub_thin.yml start'"
+  stop program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && RAILS_ENV=production /home/<%= user_name %>/.rvm/bin/rvm default do bundle exec thin -C config/private_pub_thin.yml stop'"
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 3 restarts within 3 cycles then timeout
+<% end %>
+
+<% if user_name && app_name && node[:monit][:sidekiq] == true %>
+### Sidekiq ###
+check process sidekiq
+  with pidfile "/home/<%= user_name %>/<%= app_name %>/shared/tmp/pids/sidekiq.pid"
+  start program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && /home/<%= user_name %>/.rvm/bin/rvm default do bundle exec sidekiq --index 0 --pidfile /home/<%= user_name %>/<%= app_name %>/shared/tmp/pids/sidekiq.pid --environment production --logfile /home/<%= user_name %>/<%= app_name %>/shared/log/sidekiq.log --daemon'"
+  stop program = "/bin/su - <%= app_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && /home/<%= user_name %>/.rvm/bin/rvm default do bundle exec sidekiqctl stop /home/<%= user_name %>/<%= app_name %>/shared/tmp/pids/sidekiq.pid 10'"
+<% end %>
+
+<% if user_name && app_name && node[:monit][:sphinx] == true %>
+### Sphinx ###
+check process sphinx
+  with pidfile "/home/<%= user_name %>/<%= app_name %>/shared/log/production.sphinx.pid"
+  start program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && ( RAILS_ENV=production ~/.rvm/bin/rvm default do bundle exec rake ts:configure ) && cd /home/<%= user_name %>/<%= app_name %>/current && ( RAILS_ENV=production ~/.rvm/bin/rvm default do bundle exec rake ts:start )'"
+  stop program = "/bin/su - <%= user_name %> -c 'cd /home/<%= user_name %>/<%= app_name %>/current && ( RAILS_ENV=production ~/.rvm/bin/rvm default do bundle exec rake ts:stop )'"
+  if cpu > 80% then restart
+  if memory usage > 80% for 2 cycles then restart
+  if 3 restarts within 3 cycles then timeout  
+<% end %>

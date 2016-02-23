@@ -1,1 +1,0 @@
-default['redis-server']['package'] = 'redis-server'

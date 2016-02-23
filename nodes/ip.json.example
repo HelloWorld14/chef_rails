@@ -22,12 +22,6 @@
     ]
   },
 
-  "application": {
-    "database_user": "<USERNAME>",
-    "database_user_password": "<SECRET>",
-    "database_name": "<NAMEDATABSE>"
-  },
-
   "run_list": [
     "recipe[openssl::default]",
     "recipe[build-essential::default]",
@@ -37,7 +31,9 @@
     "recipe[postgresql::server]",
     "recipe[rvm::default]",
     "recipe[rvm::user]",
-    "recipe[nginx-server::default]"
+    "recipe[nginx-server::default]",
+    "recipe[redis-server::default]",
+    "recipe[monit::default]"
   ],
 
   "automatic": {

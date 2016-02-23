@@ -1,4 +1,7 @@
-worker_processes  2;
+<% user_name = node[:authorization][:sudo][:users][0] %>
+<% app_name = node[:application][:name] %>
+
+worker_processes <%= node[:nginx][:workers] %>;
 
 
 events {
@@ -16,13 +19,13 @@ http {
     gzip  on;
 
     upstream unicorn {
-        server unix:/tmp/unicorn.new_svcnet.sock fail_timeout=0;
+        server unix:/tmp/unicorn.<%= app_name %>.sock fail_timeout=0;
     }
 
     server {
         listen       80;
-        server_name  148.251.27.154;
-        root /home/deploy/svcnet/current/public;
+        server_name  <%= node[:automatic][:ipaddress] %>;
+        root /home/<%= user_name %>/<%= app_name %>/current/public;
         client_max_body_size 25M;
 
         location ^~ /assets/ {
